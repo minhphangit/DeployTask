@@ -1,8 +1,7 @@
-import { Button, Popconfirm, TreeDataNode } from "antd";
+import { Button, Popconfirm, Tooltip, TreeDataNode } from "antd";
 import { ColumnsType } from "antd/lib/table";
 import { icons } from "../Users/data";
-import { searchMail, uploadImage } from "./api/sendMail.api";
-import { searchFolder } from "./api/folders.api";
+import { uploadImage } from "./api/sendMail.api";
 
 export type Mail = {
   id: number;
@@ -29,33 +28,53 @@ export interface Folder {
   order: number;
 }
 
-// build tree from folders using recursion
-function buildTreeFromFolders(
+const truncateFolderName = (name: string): string => {
+  if (name.length <= 20) return name;
+  return `${name.slice(0, 20)}...`;
+};
+
+const buildTreeFromFolders = (
   folders: Folder[],
-  parentId: number | null = null,
-  level: number = 1
-): TreeDataNode[] {
-  if (level > 4) return [];
+  renderTitle: (folder: Folder) => React.ReactNode
+): any[] => {
+  const folderMap = new Map(
+    folders.map((folder) => [folder.folderId, { ...folder, children: [] }])
+  );
 
-  return folders
-    .filter((folder) => folder.parentId === parentId)
-    .sort((a, b) => a.order - b.order)
-    .map((folder) => ({
-      title: folder.name,
-      key: folder.id.toString(),
-      children: buildTreeFromFolders(folders, Number(folder.id), level + 1),
-      isLeaf: level === 5,
-    }));
-}
+  const treeData: any[] = [];
 
-// check if folder can be deleted
-async function canDeleteFolder(folderId: number): Promise<boolean> {
-  const [subFolders, mails] = await Promise.all([
-    searchFolder({ parentId: folderId }),
-    searchMail({ folderId: folderId }),
-  ]);
-  return subFolders.data.length === 0 && mails.data.length === 0;
-}
+  folderMap.forEach((folder) => {
+    const node = {
+      title: renderTitle(folder),
+      key: folder.folderId,
+      children: folder.children,
+    };
+
+    if (folder.parentId === null) {
+      treeData.push(node);
+    } else {
+      const parentFolder: any = folderMap.get(folder.parentId);
+      if (parentFolder) {
+        parentFolder.children.push(node);
+      }
+    }
+  });
+
+  return treeData;
+};
+
+const getNextFolderId = (folders: Folder[]): number => {
+  return folders.length === 0
+    ? 1
+    : Math.max(...folders.map((f) => f.folderId)) + 1;
+};
+
+const getNextFolderOrder = (
+  folders: Folder[],
+  parentId: number | null
+): number => {
+  return folders.filter((f) => f.parentId === parentId).length + 1;
+};
 
 // define columns of table
 const columnMails: ColumnsType<Mail> = [
@@ -218,5 +237,7 @@ export {
   uploadImages,
   replaceBase64WithUrls,
   buildTreeFromFolders,
-  canDeleteFolder,
+  truncateFolderName,
+  getNextFolderId,
+  getNextFolderOrder,
 };

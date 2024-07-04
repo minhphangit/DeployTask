@@ -11,6 +11,7 @@ import {
 import React, { useEffect, useState } from "react";
 import FroalaEditorComponent from "./EditorContent/FroalaEditor";
 import { searchFolder } from "../api/folders.api";
+import ContentEditor from "./EditorContent/ContentEditor";
 
 interface InsertUpdateMailProps {
   selectedMail: Mail | null;
@@ -149,7 +150,14 @@ const InsertUpdateMail: React.FC<InsertUpdateMailProps> = ({
                 { required: true, message: "Vui lòng nhập tên thư mục!" },
               ]}
             >
-              <Select placeholder="Chọn thư mục">
+              <Select
+                placeholder="Chọn thư mục"
+                showSearch
+                filterOption={(input: any, option: any) =>
+                  option?.children.toLowerCase().indexOf(input.toLowerCase()) >=
+                  0
+                }
+              >
                 {folders.map((folder) => (
                   <Select.Option key={folder.folderId} value={folder.folderId}>
                     {folder.name}
@@ -182,6 +190,7 @@ const InsertUpdateMail: React.FC<InsertUpdateMailProps> = ({
                 content={editorContent}
                 onModelChange={handleEditorChange}
               />
+              {/* <ContentEditor/> */}
             </Form.Item>
           </Col>
         </Row>

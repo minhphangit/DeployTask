@@ -10,7 +10,7 @@ import BlotFormatter, {
 
 type Props = {
   value?: string;
-  onChange?: (content: string) => void;
+  onChange?: () => void;
   placeholder?: string;
 };
 
@@ -49,10 +49,17 @@ export class CustomImageSpec extends ImageSpec {
   }
 }
 
+//Start Fix image/Video allignment
 const ImageBase = Quill.import("formats/image");
 const VideoBase = Quill.import("formats/video");
 
-const ATTRIBUTES = ["alt", "height", "width", "class", "style"];
+const ATTRIBUTES = [
+  "alt",
+  "height",
+  "width",
+  "class",
+  "style", // This is the added difference that needs to be saved properly
+];
 
 export class CustomImage extends ImageBase {
   static formats(domNode: any) {
@@ -120,12 +127,12 @@ export class CustomVideo extends VideoBase {
     }
   }
 }
+//End fix image allignment
 
 const ContentEditor: React.FC<Props> = ({ value, onChange, placeholder }) => {
   Quill.register("modules/blotFormatter", BlotFormatter);
-  Quill.register("formats/image", CustomImage);
-  Quill.register("formats/video", CustomVideo);
-
+  Quill.register("formats/image", CustomImage); //Fix image allignment
+  Quill.register("formats/video", CustomVideo); //Fix video allignment
   const modules = {
     blotFormatter: {
       specs: [CustomImageSpec],
@@ -145,7 +152,7 @@ const ContentEditor: React.FC<Props> = ({ value, onChange, placeholder }) => {
         { indent: "-1" },
         { indent: "+1" },
       ],
-      [{ color: [] }, { background: [] }],
+      [{ color: [] }, { background: [] }], // dropdown with defaults from theme
       [{ script: "super" }],
       [
         { align: "" },
@@ -157,6 +164,7 @@ const ContentEditor: React.FC<Props> = ({ value, onChange, placeholder }) => {
       ["clean"],
     ],
     clipboard: {
+      // toggle to add extra line breaks when pasting HTML:
       matchVisual: false,
     },
   };
@@ -178,24 +186,23 @@ const ContentEditor: React.FC<Props> = ({ value, onChange, placeholder }) => {
     "video",
     "code",
     "code-block",
+    // fix image resize
     "height",
     "width",
     "class",
     "style",
-    "empty",
   ];
-
   return (
-    <ReactQuill
-      theme="snow"
-      value={value || ""}
-      modules={modules}
-      formats={formats}
-      onChange={onChange}
-      placeholder={placeholder}
-      preserveWhitespace={true}
-    />
+    <>
+      <ReactQuill
+        theme="snow"
+        value={value || ""}
+        modules={modules}
+        formats={formats}
+        onChange={onChange}
+        placeholder={placeholder}
+      />
+    </>
   );
 };
-
 export default ContentEditor;
