@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { Tree, Input, Modal, Button } from "antd";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { PlusIcon } from "lucide-react";
+import ContextMenu from "./FolderContextMenu";
 
 const { DirectoryTree } = Tree;
 
@@ -85,18 +86,64 @@ export const FolderTreeView: React.FC<{
   onSelect: (keys: React.Key[], info: any) => void;
   onExpand: (keys: React.Key[], info: any) => void;
   onDrop: (info: any) => void;
-}> = ({ treeData, selectedKeys, onSelect, onExpand, onDrop }) => (
-  <DirectoryTree
-    multiple={false}
-    showLine={true}
-    draggable
-    blockNode
-    onDrop={onDrop}
-    defaultExpandAll
-    onSelect={onSelect}
-    onExpand={onExpand}
-    selectedKeys={selectedKeys}
-    treeData={treeData}
-    style={{ textAlign: "left" }}
-  />
-);
+  onAddFolder: () => void;
+  onEditFolder: () => void;
+  onDeleteFolder: () => void;
+}> = ({
+  treeData,
+  selectedKeys,
+  onSelect,
+  onExpand,
+  onDrop,
+  onAddFolder,
+  onEditFolder,
+  onDeleteFolder,
+}) => {
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+  }>({ visible: false, x: 0, y: 0 });
+
+  const handleRightClick = (info: any) => {
+    info.event.preventDefault();
+    setContextMenu({
+      visible: true,
+      x: info.event.clientX,
+      y: info.event.clientY,
+    });
+  };
+
+  const handleCloseContextMenu = () => {
+    setContextMenu({ ...contextMenu, visible: false });
+  };
+
+  return (
+    <>
+      <DirectoryTree
+        multiple={false}
+        showLine={true}
+        draggable
+        blockNode
+        onDrop={onDrop}
+        defaultExpandAll
+        onSelect={onSelect}
+        onExpand={onExpand}
+        selectedKeys={selectedKeys}
+        treeData={treeData}
+        style={{ textAlign: "left" }}
+        onRightClick={handleRightClick}
+      />
+      {contextMenu.visible && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onAddFolder={onAddFolder}
+          onEditFolder={onEditFolder}
+          onDeleteFolder={onDeleteFolder}
+          onClose={handleCloseContextMenu}
+        />
+      )}
+    </>
+  );
+};

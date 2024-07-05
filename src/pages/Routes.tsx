@@ -3,7 +3,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import MainLayout from "./Layout";
 import Users from "./Users/Users";
 import ErrorPage from "../components/Error";
-import Mails from "./SendMail/Mails";
+import Mails from "./Mails/Mails";
 
 const router = createBrowserRouter([
   {

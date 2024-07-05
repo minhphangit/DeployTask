@@ -103,7 +103,7 @@ export const useFolders = () => {
 
   const hasSubfolders = useCallback(
     (folderId: number): boolean => {
-      return folders.some((folder) => folder.parentId === folderId);
+      return folders.some((folder) => folder.parentId === folderId); //Check xem có thư mục con không có thì trả về True luôn
     },
     [folders]
   );
@@ -111,29 +111,22 @@ export const useFolders = () => {
   const moveFolder = useCallback(
     async (
       dragKey: number,
-      dropKey: number | null,
-      dropPosition: number
+      newParentId: number | null,
+      newOrder: number
     ): Promise<boolean> => {
       const loadingMessage = message.loading("Đang di chuyển thư mục...", 0);
       setIsLoading(true);
       try {
+        // Find the folder being dragged
         const dragFolder = folders.find((f) => f.folderId === dragKey);
-        const dropFolder = folders.find((f) => f.folderId === dropKey);
 
         if (!dragFolder) {
           throw new Error("Không tìm thấy thư mục được kéo");
         }
-
-        let newParentId: number | null = null;
-        let newLevel: number = 1;
-
-        if (dropPosition === 0) {
-          newParentId = dropKey;
-          newLevel = (dropFolder?.level || 0) + 1;
-        } else {
-          newParentId = dropFolder?.parentId || null;
-          newLevel = dropFolder?.level || 1;
-        }
+        // Calculate the new level of the folder
+        const newLevel = newParentId
+          ? (folders.find((f) => f.folderId === newParentId)?.level || 0) + 1
+          : 1;
 
         if (newLevel > 4) {
           message.warning(
@@ -141,14 +134,42 @@ export const useFolders = () => {
           );
           return false;
         }
+        // Find and update  folders affected by the move
+        const affectedFolders = folders
+          .filter(
+            (f) =>
+              f.parentId === newParentId &&
+              f.folderId !== dragKey &&
+              f.order >= newOrder
+          )
+          .map((f) => ({ ...f, order: f.order + 1 }));
+        // Update the level of subfolders
+        const updateSubfolderLevels = (folderId: number, levelDiff: number) => {
+          const subfolders = folders.filter((f) => f.parentId === folderId);
+          subfolders.forEach((subfolder) => {
+            affectedFolders.push({
+              ...subfolder,
+              level: subfolder.level + levelDiff,
+            });
+            updateSubfolderLevels(subfolder.folderId, levelDiff);
+          });
+        };
 
-        const updatedFolder: Folder = {
+        const levelDiff = newLevel - dragFolder.level;
+        updateSubfolderLevels(dragFolder.folderId, levelDiff);
+        // Update folder being dragged
+        const updatedDragFolder: Folder = {
           ...dragFolder,
           parentId: newParentId,
           level: newLevel,
+          order: newOrder,
         };
 
-        await updateFolder(updatedFolder);
+        await Promise.all([
+          ...affectedFolders.map((f) => updateFolder(f)),
+          updateFolder(updatedDragFolder),
+        ]);
+
         await fetchFolders();
         message.success("Di chuyển thư mục thành công");
         return true;

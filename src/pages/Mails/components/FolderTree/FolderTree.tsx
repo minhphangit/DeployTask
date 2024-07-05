@@ -266,8 +266,40 @@ const FolderTree: React.FC<FolderTreeProps> = ({ onFolderSelect }) => {
     const dropPosition =
       info.dropPosition - Number(dropPos[dropPos.length - 1]);
 
-    await moveFolder(dragKey, dropKey, dropPosition);
+    const dragFolder = folders.find((f) => f.folderId === dragKey);
+    const dropFolder = folders.find((f) => f.folderId === dropKey);
+
+    if (!dragFolder) {
+      message.error("Không thể di chuyển thư mục");
+      return;
+    }
+
+    let newParentId: number | null;
+    let newOrder: number;
+
+    if (dropPosition === -1 && dropFolder === undefined) {
+      newParentId = null;
+      newOrder = getNextFolderOrder(folders, null);
+    } else if (dropPosition === 0) {
+      newParentId = dropKey;
+      newOrder = getNextFolderOrder(folders, dropKey);
+    } else {
+      newParentId = dropFolder ? dropFolder.parentId : null;
+      const siblingFolders = folders.filter((f) => f.parentId === newParentId);
+      const dropIndex = dropFolder
+        ? siblingFolders.findIndex((f) => f.folderId === dropKey)
+        : -1;
+
+      if (dropPosition === 1) {
+        newOrder = dropFolder ? dropFolder.order + 1 : 1;
+      } else {
+        newOrder = dropIndex > 0 ? siblingFolders[dropIndex - 1].order + 1 : 1;
+      }
+    }
+
+    await moveFolder(dragKey, newParentId, newOrder);
   };
+
   return (
     <div className="border-dashed border-2 p-5">
       <FolderActions
@@ -278,6 +310,9 @@ const FolderTree: React.FC<FolderTreeProps> = ({ onFolderSelect }) => {
       <Divider />
 
       <FolderTreeView
+        onAddFolder={handleAddFolder}
+        onEditFolder={handleEditFolder}
+        onDeleteFolder={handleDeleteFolder}
         onDrop={onDrop}
         treeData={treeData}
         selectedKeys={selectedKeys}

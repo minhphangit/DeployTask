@@ -1,4 +1,4 @@
-import { Button, Popconfirm, Tooltip, TreeDataNode } from "antd";
+import { Button, Popconfirm } from "antd";
 import { ColumnsType } from "antd/lib/table";
 import { icons } from "../Users/data";
 import { uploadImage } from "./api/sendMail.api";
