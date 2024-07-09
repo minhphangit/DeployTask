@@ -59,7 +59,9 @@ function MailManagement({ selectedFolderId }: MailManagementProps) {
             searchMail({ folderId }).catch(() => ({ data: [] }))
           )
         );
-        const allMails = mailResponses.flatMap((response) => response.data);
+        const allMails = mailResponses.flatMap(
+          (response: any) => response.data
+        );
         const data: any = allMails.map((mail: Mail) => ({
           ...mail,
           folderId: mail.folderId || null,

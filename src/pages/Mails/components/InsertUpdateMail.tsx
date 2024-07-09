@@ -12,6 +12,7 @@ import React, { useEffect, useState } from "react";
 import FroalaEditorComponent from "./EditorContent/FroalaEditor";
 import { searchFolder } from "../api/folders.api";
 import ContentEditor from "./EditorContent/ContentEditor";
+import DynamicEditor from "./EditorContent/DynamicEditor";
 
 interface InsertUpdateMailProps {
   selectedMail: Mail | null;
@@ -28,6 +29,7 @@ const InsertUpdateMail: React.FC<InsertUpdateMailProps> = ({
   const [loading, setLoading] = useState(false);
   const [editorContent, setEditorContent] = useState("");
   const [folders, setFolders] = useState<Folder[]>([]);
+
   useEffect(() => {
     if (selectedMail) {
       form.setFieldsValue(selectedMail);
@@ -42,10 +44,35 @@ const InsertUpdateMail: React.FC<InsertUpdateMailProps> = ({
     setLoading(true);
     try {
       let content = editorContent;
+
+      // Chuyển đổi Blob URLs thành base64
       content = await convertBlobUrlsToBase64(content);
+
+      // Trích xuất và xử lý hình ảnh base64
       const base64Images = extractBase64Images(content);
+
+      // Kiểm tra kích thước hình ảnh
+      const MAX_IMAGE_SIZE = 1024 * 1024;
+      for (const base64 of base64Images) {
+        const sizeInBytes = (base64.length * 3) / 4;
+        if (sizeInBytes > MAX_IMAGE_SIZE) {
+          throw new Error(
+            `Hình ảnh quá lớn. Kích thước tối đa là ${
+              MAX_IMAGE_SIZE / (1024 * 1024)
+            }MB.`
+          );
+        }
+      }
+
+      // Tải lên hình ảnh
       const uploadedImages = await uploadImages(base64Images);
+      if (!uploadedImages || uploadedImages.length !== base64Images.length) {
+        throw new Error("Có lỗi xảy ra khi tải lên hình ảnh.");
+      }
+
+      // Thay thế base64 bằng URL
       const updatedContent = replaceBase64WithUrls(content, uploadedImages);
+
       const updatedValues = { ...values, mailContent: updatedContent };
 
       if (selectedMail && selectedMail.id) {
@@ -58,7 +85,9 @@ const InsertUpdateMail: React.FC<InsertUpdateMailProps> = ({
       onSuccess();
     } catch (error) {
       console.error("Error:", error);
-      message.error("Operation failed");
+      message.error(
+        error instanceof Error ? error.message : "Có lỗi xảy ra khi xử lý mail"
+      );
     } finally {
       setLoading(false);
     }
@@ -186,11 +215,17 @@ const InsertUpdateMail: React.FC<InsertUpdateMailProps> = ({
                 },
               ]}
             >
-              <FroalaEditorComponent
+              {/* <FroalaEditorComponent
                 content={editorContent}
                 onModelChange={handleEditorChange}
+              /> */}
+              {/* <ContentEditor /> */}
+              <DynamicEditor
+                value={editorContent}
+                setValue={setEditorContent}
+                isEditHtml={true}
+                readOnly={false}
               />
-              {/* <ContentEditor/> */}
             </Form.Item>
           </Col>
         </Row>

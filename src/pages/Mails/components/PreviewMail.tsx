@@ -91,6 +91,7 @@ const PreviewMail: React.FC<InsertUpdateMailProps> = ({
         throw new Error("Failed to send email");
       }
     } catch (error) {
+      console.log("««««« error »»»»»", error);
       message.error("Operation failed");
     } finally {
       setLoading(false);

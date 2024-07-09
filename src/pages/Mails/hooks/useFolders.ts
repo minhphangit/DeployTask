@@ -103,7 +103,7 @@ export const useFolders = () => {
 
   const hasSubfolders = useCallback(
     (folderId: number): boolean => {
-      return folders.some((folder) => folder.parentId === folderId); //Check xem có thư mục con không có thì trả về True luôn
+      return folders.some((folder) => folder.parentId === folderId);
     },
     [folders]
   );
@@ -117,13 +117,12 @@ export const useFolders = () => {
       const loadingMessage = message.loading("Đang di chuyển thư mục...", 0);
       setIsLoading(true);
       try {
-        // Find the folder being dragged
         const dragFolder = folders.find((f) => f.folderId === dragKey);
 
         if (!dragFolder) {
           throw new Error("Không tìm thấy thư mục được kéo");
         }
-        // Calculate the new level of the folder
+
         const newLevel = newParentId
           ? (folders.find((f) => f.folderId === newParentId)?.level || 0) + 1
           : 1;
@@ -134,7 +133,7 @@ export const useFolders = () => {
           );
           return false;
         }
-        // Find and update  folders affected by the move
+
         const affectedFolders = folders
           .filter(
             (f) =>
@@ -143,7 +142,7 @@ export const useFolders = () => {
               f.order >= newOrder
           )
           .map((f) => ({ ...f, order: f.order + 1 }));
-        // Update the level of subfolders
+
         const updateSubfolderLevels = (folderId: number, levelDiff: number) => {
           const subfolders = folders.filter((f) => f.parentId === folderId);
           subfolders.forEach((subfolder) => {
@@ -157,7 +156,7 @@ export const useFolders = () => {
 
         const levelDiff = newLevel - dragFolder.level;
         updateSubfolderLevels(dragFolder.folderId, levelDiff);
-        // Update folder being dragged
+
         const updatedDragFolder: Folder = {
           ...dragFolder,
           parentId: newParentId,
