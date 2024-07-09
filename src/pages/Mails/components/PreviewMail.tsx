@@ -5,6 +5,7 @@ import emailjs from "@emailjs/browser";
 import { updateMail } from "../api/sendMail.api";
 import "froala-editor/css/froala_editor.pkgd.min.css";
 import "froala-editor/css/froala_style.min.css";
+import { htmlFooter, htmlHeader } from "./EditorContent/contants";
 interface InsertUpdateMailProps {
   selectedMail: Mail | null;
   onCancel: () => void;
@@ -62,11 +63,13 @@ const PreviewMail: React.FC<InsertUpdateMailProps> = ({
       const serviceID = `${process.env.REACT_APP_MAIL_SERVICE_ID}`;
       const templateID = `${process.env.REACT_APP_MAIL_TEMPLATE_ID}`;
       const userID = `${process.env.REACT_APP_MAIL_USER_ID}`;
+      // Combine the HTML header, mail content, and footer
+      const fullHtmlContent = `${htmlHeader}${updatedMail.mailContent}${htmlFooter}`;
       const templateParams = {
         to_email: updatedMail.mailReceiver,
         from_email: updatedMail.mailSender,
         subject: updatedMail.mailTitle,
-        html: updatedMail.mailContent,
+        html: fullHtmlContent,
         to_name: updatedMail.nameStudent,
       };
 
@@ -144,7 +147,7 @@ const PreviewMail: React.FC<InsertUpdateMailProps> = ({
           </Form.Item>
 
           <div
-            className="fr-view border-2 drop-shadow-sm p-5"
+            className="fr-view ql-editor border-2 drop-shadow-sm p-5"
             dangerouslySetInnerHTML={{ __html: mailContent }}
             style={{
               height: "calc(100vh - 300px)",
