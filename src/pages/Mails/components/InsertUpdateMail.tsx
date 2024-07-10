@@ -213,6 +213,7 @@ const InsertUpdateMail: React.FC<InsertUpdateMailProps> = ({
                     return Promise.resolve();
                   },
                 },
+                { required: true, message: "Vui lòng nhập nội dung mail!" },
               ]}
             >
               {/* <FroalaEditorComponent
